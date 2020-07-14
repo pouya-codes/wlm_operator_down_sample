@@ -1,24 +1,33 @@
 apiVersion: wlm.sylabs.io/v1alpha1
 kind: SlurmJob
 metadata:
-  name: down-sample
+  name: down_sample
 spec:
   batch: |
     #!/bin/sh
+    #SBATCH -J down_sample
     #SBATCH --nodes=1
-    #SBATCH --output downsample.out
-    #SBATCH --error downsample.err
-    git clone https://github.com/pouya1991/wlm_operator_down_sample.git downsample
-    cd downsample
-    srun singularity pull -U library://pouya/wlm_test/downsample
-    srun singularity run downsample_latest.sif
+    #SBATCH --output down_sample.out
+    #SBATCH --error down_sample.err
+    #SBATCH --time=00:10:00
+
+    git clone https://github.com/pouya1991/wlm_operator_down_sample.git down_sample
+    cd down_sample
+    srun singularity pull -U down_sample.sif library://pouya/wlm_test/downsample:latest
+    srun singularity run down_sample.sif
+    tar -czvf results.tar.gz results
+    rm down_sample.sif
+    rm -rf results
+
   nodeSelector:
     kubernetes.io/hostname: slurm-node-1-debug
   results:
-    from: down_sample.out
+    from: results.tar.gz
     mount:
       name: data
-      hostPath:
+      nfs:
         path: /home/vagrant/job-results
         type: DirectoryOrCreate
+
+
 
